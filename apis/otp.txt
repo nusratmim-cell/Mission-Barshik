@@ -1,0 +1,22 @@
+curl 'https://api.shikho.com/public/activity/otp' \
+  -H 'accept: application/json, text/plain, */*' \
+  -H 'accept-language: en-US,en;q=0.9' \
+  -H 'content-type: application/json' \
+  -H 'origin: https://shikho.com' \
+  -H 'priority: u=1, i' \
+  -H 'referer: https://shikho.com/' \
+  -H 'sec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "macOS"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-site' \
+  -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36' \
+  --data-raw '{"phone":"01724175075","intent":"ap-discount-request"}'
+  Response - 
+  {
+    "body": {
+        "token": "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiIwMTcyNDE3NTA3NSIsImV4cCI6MTc2NTE5ODI4OCwiaWF0IjoxNzY1MTExODg4LCJpbnRlbnQiOiJhcC1kaXNjb3VudC1yZXF1ZXN0IiwianRpIjoiYXhzeVZhdGl4Ym9ldmF1dVlqZUhLdDZSeTJmbnBKUUIiLCJ1aWQiOiI2MTIwODllNS1hYmQ5LTRlNzMtODg3OS0wNDdlNjgyZTVjZDMifQ.KOZ5fH23WU36w7x3UNJc9gx5bjlbAZ3eU4VKpf7w4zGA0jQ-_dtk6E47jS1aqJ30qfpgOtcuKmDRzk9Pge7Xq-lsiMh5Fxu3USL-8cbcy5lxRM2G0Z8WkOfn_rL1uRqa2xGIpAY5Wh1eo_v18RJ5v8cWzgAx8vs1JaxnxrcNBiDuqsznN19g21cC4kvf4fzTMmE8ZTttdoO0Pf20cXE7teBHsZFE6tSNSw34ONSJZUPMhmiuAImtc3xArU2v0vNYZDUmSyPf6QUHHIbOp76p80hYPlCYMUNIxWQA40L10GOtJLAKovuShj1J_9_TlPjljXEQPqzxfGbm-Pe-pfZvswn-hvj-FOCzGMwXE0jU9wKZ2ObXzj4KG4xOiTa2HEGaM8AIcrIR_46a5l6g3JYJtoA0F0zdxHY__SRrP4Zm6A32lzd0XcLBC5nr79Qx6BX_r3-mx-GOsxq5zBzgeQZ5eW3bTzytcOddWfZ7PM2duIxu2zEuC6lCcfvTJ79FFQUDSUWxFGXUYpQWSy9B4DO9-cDHMRMapWpwoqsIOxW1JF5UZC2Sq8CYe-rIaaS916Ea37Td8Ulq0ukgNh0BvalSFo7vZCeMBd9tMbErcErZzTkYFEerbEDA9A41aTmFuq__PzIi6HGuUl42ErHjCjAN6cMjtsyRIiAQ-vgExfKXLyg"
+    },
+    "code": 200
+}
