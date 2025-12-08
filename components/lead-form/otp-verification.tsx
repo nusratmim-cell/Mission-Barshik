@@ -83,6 +83,7 @@ export function OTPVerification({ classId }: OTPVerificationProps) {
         class: formData.classId,
         name: formData.name,
         group: formData.group,
+        phone: formData.phone, // Added for CRM processing
       })
 
       if (response.success) {

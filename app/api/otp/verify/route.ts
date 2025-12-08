@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { triggerCRMProcessing } from '@/lib/services/crm-service';
 
 // Shikho API base URL
 const SHIKHO_API_BASE = process.env.SHIKHO_API_BASE_URL || 'https://api.shikho.com';
@@ -13,6 +14,7 @@ interface VerifyOTPMeta {
   class: string;
   name: string;
   group?: string;
+  phone?: string; // Added to receive phone for CRM processing
 }
 
 interface VerifyOTPRequest {
@@ -75,6 +77,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<VerifyOTP
       console.log('[DEBUG] OTP:', otp);
       console.log('[DEBUG] Meta:', meta);
       
+      // Trigger CRM processing in background (fire-and-forget) even in debug mode
+      if (meta.phone) {
+        triggerCRMProcessing({
+          name: meta.name,
+          phone: meta.phone,
+          classId: meta.class,
+          group: meta.group,
+        });
+      }
+      
       return NextResponse.json({
         success: true,
         message: 'OTP verified successfully (debug mode)',
@@ -101,6 +113,20 @@ export async function POST(request: NextRequest): Promise<NextResponse<VerifyOTP
 
     // Check if the request was successful
     if (response.ok && data.code === 200) {
+      // Trigger CRM processing in background (fire-and-forget)
+      // This runs in parallel and doesn't block the user response
+      if (meta.phone) {
+        console.log('[OTP Verify] Triggering CRM processing for verified user');
+        triggerCRMProcessing({
+          name: meta.name,
+          phone: meta.phone,
+          classId: meta.class,
+          group: meta.group,
+        });
+      } else {
+        console.warn('[OTP Verify] Phone not provided in meta, skipping CRM processing');
+      }
+      
       return NextResponse.json({
         success: true,
         message: data.message || 'OTP verified successfully'

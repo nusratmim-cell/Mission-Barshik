@@ -23,6 +23,7 @@ export interface VerifyOTPMeta {
   class: string;
   name: string;
   group?: string;
+  phone?: string; // Added for CRM processing
 }
 
 export interface VerifyOTPResponse {
