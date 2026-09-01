@@ -1,50 +1,70 @@
 // Class configuration for the lead generation platform
 // Each class has its own drive URL and resource information
 
-export type ClassId = 'c5' | 'c8' | 'c12';
+export type ClassId = 'c6' | 'c7' | 'c8' | 'c9';
+
+// Group/batch options, used by classes where hasGroup is true
+export type GroupValue = 'science' | 'humanities' | 'business';
 
 export interface ClassConfig {
   id: ClassId;
   label: string;
   labelBn: string;
+  /** Folder for the class as a whole; also the fallback when a group has no folder. */
   driveUrl: string;
   resourceTitle: string;
   resourceTitleBn: string;
   hasGroup: boolean;
+  /** Per-group subfolders, for classes where hasGroup is true. */
+  groupDriveUrls?: Partial<Record<GroupValue, string>>;
 }
 
+// Drive folders live under the "Mission Barshik" parent folder:
+// https://drive.google.com/drive/folders/1R79r6q7kHg9sl20aSYypZDE9_pEyvFP7
+
 export const CLASS_CONFIG: Record<ClassId, ClassConfig> = {
-  c5: {
-    id: 'c5',
-    label: 'Class 5',
-    labelBn: 'ক্লাস ৫',
-    driveUrl: 'https://drive.google.com/drive/folders/15MzujdWVDXAyBRpb_ITFFWSrF8QNuaxw?usp=sharing',
-    resourceTitle: 'C5 Britti Exam Free Class',
-    resourceTitleBn: 'ক্লাস ৫ বৃত্তি পরীক্ষা ফ্রি ক্লাস',
+  c6: {
+    id: 'c6',
+    label: 'Class 6',
+    labelBn: 'ষষ্ঠ শ্রেণি',
+    driveUrl: 'https://drive.google.com/drive/folders/1_6-w0-hgGowzfvxAuF5fA8zvs_s8I4Ak?usp=sharing',
+    resourceTitle: 'Class 6 Mission Barshik',
+    resourceTitleBn: 'ষষ্ঠ শ্রেণি মিশন বার্ষিক',
+    hasGroup: false
+  },
+  c7: {
+    id: 'c7',
+    label: 'Class 7',
+    labelBn: 'সপ্তম শ্রেণি',
+    driveUrl: 'https://drive.google.com/drive/folders/1-oEvK3qMKsUIrWcMBpv_CvxayGMcc76n?usp=sharing',
+    resourceTitle: 'Class 7 Mission Barshik',
+    resourceTitleBn: 'সপ্তম শ্রেণি মিশন বার্ষিক',
     hasGroup: false
   },
   c8: {
     id: 'c8',
     label: 'Class 8',
-    labelBn: 'ক্লাস ৮',
-    driveUrl: 'https://drive.google.com/drive/folders/1K7NM3BWuDNvu8bWHIHR1ZGyKXefD6buV?usp=sharing',
-    resourceTitle: 'C8 Britti Exam Free Class',
-    resourceTitleBn: 'ক্লাস ৮ বৃত্তি পরীক্ষা ফ্রি ক্লাস',
+    labelBn: 'অষ্টম শ্রেণি',
+    driveUrl: 'https://drive.google.com/drive/folders/1GUn25TKfDvS5ouVrzYLkUZlReF7A9Z8u?usp=sharing',
+    resourceTitle: 'Class 8 Mission Barshik',
+    resourceTitleBn: 'অষ্টম শ্রেণি মিশন বার্ষিক',
     hasGroup: false
   },
-  c12: {
-    id: 'c12',
-    label: 'Admission',
-    labelBn: 'এডমিশন',
-    driveUrl: 'https://drive.google.com/drive/folders/1e5nx-u-RRDgkfLD8Si9HJb1nD-6pPyv6?usp=sharing',
-    resourceTitle: "HSC'25 Admission Bounce Back",
-    resourceTitleBn: "এইচএসসি'২৫ এডমিশন বাউন্স ব্যাক",
-    hasGroup: true
+  c9: {
+    id: 'c9',
+    label: 'Class 9',
+    labelBn: 'নবম শ্রেণি',
+    driveUrl: 'https://drive.google.com/drive/folders/1YWW6yUKBUzS6u8n_LVWpn81ns-9OVP1x?usp=sharing',
+    resourceTitle: 'Class 9 Mission Barshik',
+    resourceTitleBn: 'নবম শ্রেণি মিশন বার্ষিক',
+    hasGroup: true,
+    groupDriveUrls: {
+      science: 'https://drive.google.com/drive/folders/14Hqzs4irU54OAaDAfqIwEPkEgLIuye0l?usp=sharing',
+      humanities: 'https://drive.google.com/drive/folders/1SzHa6fmQKNoYmaz38IsbOfbdWPvqMjjU?usp=sharing',
+      business: 'https://drive.google.com/drive/folders/1Gfxbxnpn49CmzSq95FHWn6ql8IHSWUqv?usp=sharing',
+    }
   }
 } as const;
-
-// Group/batch options for Class 12
-export type GroupValue = 'science' | 'humanities' | 'business';
 
 export interface GroupOption {
   value: GroupValue;
@@ -58,7 +78,7 @@ export const GROUP_OPTIONS: readonly GroupOption[] = [
 ] as const;
 
 // Valid class IDs for validation
-export const VALID_CLASS_IDS: readonly ClassId[] = ['c5', 'c8', 'c12'] as const;
+export const VALID_CLASS_IDS: readonly ClassId[] = ['c6', 'c7', 'c8', 'c9'] as const;
 
 // Helper function to check if a string is a valid class ID
 export function isValidClassId(id: string): id is ClassId {
@@ -71,4 +91,24 @@ export function getClassConfig(id: string): ClassConfig | undefined {
     return CLASS_CONFIG[id];
   }
   return undefined;
+}
+
+/**
+ * Resolve the Drive folder to hand the student.
+ *
+ * For a class with groups (currently only C9) this returns the group's own
+ * subfolder, e.g. science -> the SCI folder. Falls back to the class-level
+ * folder when the class has no groups, or when the group is missing/unknown.
+ */
+export function getDriveUrl(classId: string, group?: string): string | undefined {
+  const config = getClassConfig(classId);
+  if (!config) return undefined;
+
+  if (config.hasGroup && group) {
+    const groupUrl = config.groupDriveUrls?.[group as GroupValue];
+    if (groupUrl) return groupUrl;
+    console.warn(`No group folder for ${classId}/${group}, using class folder`);
+  }
+
+  return config.driveUrl;
 }

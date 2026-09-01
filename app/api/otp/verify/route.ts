@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { triggerCRMProcessing } from '@/lib/services/crm-service';
 
 // Shikho API base URL
-const SHIKHO_API_BASE = process.env.SHIKHO_API_BASE_URL || 'https://api.shikho.com';
+// No hardcoded default: an unset var must fail loudly rather than silently
+// falling back to the .com production API.
+const SHIKHO_API_BASE = process.env.SHIKHO_API_BASE_URL || '';
 
 // OTP intent for this platform
 const OTP_INTENT = 'free-class-resource-download';

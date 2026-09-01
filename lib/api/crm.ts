@@ -9,7 +9,17 @@ import { SHIKHO_PRODUCT_ID } from '@/lib/config/crm-mappings';
 import { logCRMCall } from '@/lib/services/sheets-logger';
 
 // CRM API configuration from environment variables
-const CRM_API_BASE_URL = process.env.CRM_API_BASE_URL || 'https://crm-api.shikho.com/api/v1';
+// No hardcoded default: an unset var must fail loudly rather than silently
+// falling back to the .com production CRM.
+const CRM_API_BASE_URL = process.env.CRM_API_BASE_URL || '';
+
+/** Throws if the CRM base URL is not configured, so we never fall back to production. */
+function requireCRMBaseUrl(): string {
+  if (!CRM_API_BASE_URL) {
+    throw new Error('CRM_API_BASE_URL is not set. Refusing to call the CRM.');
+  }
+  return CRM_API_BASE_URL;
+}
 const CRM_API_TOKEN = process.env.CRM_API_TOKEN || '';
 const CRM_LOG_REF_ID = process.env.CRM_LOG_REF_ID || 'gform-web-001-0000000000001';
 
@@ -134,7 +144,7 @@ export async function checkLeadExists(mobile: string, classId?: string): Promise
   }
 
   try {
-    const url = new URL(`${CRM_API_BASE_URL}/leads`);
+    const url = new URL(`${requireCRMBaseUrl()}/leads`);
     url.searchParams.set('cols', 'lead_stage_id;prospect_id;owner_id;product_id');
     url.searchParams.set('search', `mobile:${mobile}`);
     url.searchParams.set('conditions', 'mobile:=');
@@ -237,7 +247,7 @@ export async function createLead(payload: CRMCreateLeadPayload, classId?: string
     console.log(`${logPrefix} Creating lead for mobile: ${payload.mobile}`);
     console.log(`${logPrefix} Payload:`, JSON.stringify(payload, null, 2));
 
-    const response = await fetch(`${CRM_API_BASE_URL}/leads/upserts`, {
+    const response = await fetch(`${requireCRMBaseUrl()}/leads/upserts`, {
       method: 'POST',
       headers: getCRMHeaders(),
       body: JSON.stringify(payload),
@@ -339,7 +349,7 @@ export async function createEvent(
     console.log(`${logPrefix} Creating event for prospect: ${payload.lead_prospect_id}`);
     console.log(`${logPrefix} Payload:`, JSON.stringify(payload, null, 2));
 
-    const response = await fetch(`${CRM_API_BASE_URL}/events`, {
+    const response = await fetch(`${requireCRMBaseUrl()}/events`, {
       method: 'POST',
       headers: getCRMHeaders(),
       body: JSON.stringify(payload),

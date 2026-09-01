@@ -91,8 +91,12 @@ export function OTPVerification({ classId }: OTPVerificationProps) {
         // Actually, we should keep it until success page loads or clear it there
         // For now, let's clear it on the success page
         
-        // Redirect to success page
-        router.push(`/class/${classId}/success`)
+        // Redirect to success page, carrying the group so the success screen
+        // can link straight to that group's Drive subfolder.
+        const successUrl = formData.group
+          ? `/class/${classId}/success?group=${encodeURIComponent(formData.group)}`
+          : `/class/${classId}/success`
+        router.push(successUrl)
       } else {
         setApiError(response.error || "ওটিপি সঠিক নয়। আবার চেষ্টা করুন।")
       }

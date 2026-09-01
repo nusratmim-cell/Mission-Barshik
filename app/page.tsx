@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 export default function Home() {
-  // Redirect to the default class (C12) or a landing page
-  // For now, let's redirect to C12 as it's the most prominent one
-  redirect("/class/c12");
+  // Redirect to the default class for this campaign.
+  // TODO: confirm which of c6/c7/c8/c9 should be the landing default.
+  redirect("/class/c6");
 }

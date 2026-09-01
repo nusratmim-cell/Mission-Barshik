@@ -5,14 +5,14 @@ import { z } from 'zod';
 const bangladeshPhoneRegex = /^01[3-9]\d{8}$/;
 
 // Valid class IDs
-const validClassIds = ['c5', 'c8', 'c12'] as const;
+const validClassIds = ['c6', 'c7', 'c8', 'c9'] as const;
 
-// Valid group values for C12
+// Valid group values for C9
 const validGroups = ['science', 'humanities', 'business'] as const;
 
 /**
  * Lead form validation schema
- * Validates name, phone, class, and conditionally group (for C12)
+ * Validates name, phone, class, and conditionally group (for C9)
  */
 export const leadFormSchema = z.object({
   name: z
@@ -34,11 +34,11 @@ export const leadFormSchema = z.object({
     message: 'একটি গ্রুপ নির্বাচন করো'
   }).optional(),
 }).superRefine((data, ctx) => {
-  // Group is required for C12
-  if (data.classId === 'c12' && !data.group) {
+  // Group is required for C9
+  if (data.classId === 'c9' && !data.group) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'এইচএসসি/এডমিশনের জন্য গ্রুপ নির্বাচন করো',
+      message: 'নবম শ্রেণির জন্য গ্রুপ নির্বাচন করো',
       path: ['group'],
     });
   }

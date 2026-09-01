@@ -6,22 +6,33 @@ import { Copy, Check, Sparkles, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Confetti } from "@/components/ui/confetti"
-import { getClassConfig } from "@/lib/config/classes"
-import { clearStoredData } from "@/lib/api/otp"
+import { getClassConfig, getDriveUrl } from "@/lib/config/classes"
+import { clearStoredData, getStoredFormData } from "@/lib/api/otp"
 
 interface SuccessScreenProps {
   classId: string
+  /** Selected group, for classes where hasGroup is true. */
+  group?: string
 }
 
-export function SuccessScreen({ classId }: SuccessScreenProps) {
+export function SuccessScreen({ classId, group }: SuccessScreenProps) {
   const [copied, setCopied] = useState(false)
   const [showToast, setShowToast] = useState(false)
+  // Falls back to the stored form data when the query string has no group,
+  // so a direct hit on this URL still resolves the right folder.
+  const [resolvedGroup, setResolvedGroup] = useState<string | undefined>(group)
   const classConfig = getClassConfig(classId)
 
   useEffect(() => {
+    if (!group) {
+      const stored = getStoredFormData()
+      if (stored?.group) setResolvedGroup(stored.group)
+    }
     // Clear stored data on mount as the flow is complete
     clearStoredData()
-  }, [])
+  }, [group])
+
+  const driveUrl = getDriveUrl(classId, resolvedGroup)
 
   if (!classConfig) {
     return <div>Invalid Class ID</div>
@@ -29,7 +40,8 @@ export function SuccessScreen({ classId }: SuccessScreenProps) {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(classConfig.driveUrl)
+      if (!driveUrl) return
+      await navigator.clipboard.writeText(driveUrl)
       setCopied(true)
       setShowToast(true)
       setTimeout(() => {
@@ -42,7 +54,8 @@ export function SuccessScreen({ classId }: SuccessScreenProps) {
   }
 
   const handleOpenDrive = () => {
-    window.open(classConfig.driveUrl, '_blank')
+    if (!driveUrl) return
+    window.open(driveUrl, '_blank')
   }
 
   return (
