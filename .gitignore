@@ -40,5 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# ...but do track the example file
+# ...but do track the example and the per-environment build files.
+# These carry no secrets: the CRM token is injected by CI from a masked
+# GitLab CI/CD variable.
 !.env.example
+!.env.develop
+!.env.stage
+!.env.prod

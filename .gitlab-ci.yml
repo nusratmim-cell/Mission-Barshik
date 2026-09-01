@@ -1,0 +1,105 @@
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "stage" || $CI_COMMIT_BRANCH == "production"
+
+stages:
+  - build
+  - dockerize
+  - deploy
+
+variables:
+  KUBEFOLDER: /root/.kube
+
+build:
+  # Pinned to Node 20: Next.js 16 requires >=20.9.0 and fails outright on 18.
+  image: timbru31/node-alpine-git:20
+  stage: build
+  artifacts:
+    paths:
+      - app
+    expire_in: 1 week
+  only:
+    - develop
+    - stage
+    - production
+
+  before_script:
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | ssh-add -
+    - mkdir -p ~/.ssh
+    - echo "HOST *" > ~/.ssh/config
+    - echo "StrictHostKeyChecking no" >> ~/.ssh/config
+    - git config url."git@gitlab.com:".insteadOf "https://gitlab.com/"
+  script:
+    - unset CI
+    - npm ci
+    # Select the environment file for this branch. Next.js inlines
+    # NEXT_PUBLIC_* values at BUILD time, so this must happen before the build.
+    - |
+      if [[ "$CI_COMMIT_BRANCH" == "production" ]]
+      then
+        mv .env.prod .env.production
+      elif [[ "$CI_COMMIT_BRANCH" == "stage" ]]
+      then
+        mv .env.stage .env.production
+      elif [[ "$CI_COMMIT_BRANCH" == "develop" ]]
+      then
+        mv .env.develop .env.production
+      else
+        echo "Not a deployable branch: $CI_COMMIT_BRANCH" && exit 1
+      fi
+    # The CRM bearer token is NOT committed. It comes from a masked GitLab
+    # CI/CD variable (Settings > CI/CD > Variables) and is appended here.
+    - |
+      if [[ -z "$CRM_API_TOKEN" ]]; then
+        echo "CRM_API_TOKEN is not set. Add it as a masked CI/CD variable." && exit 1
+      fi
+      echo "CRM_API_TOKEN=$CRM_API_TOKEN" >> .env.production
+    # Fail the build rather than ship a form that mocks every submission.
+    - |
+      if grep -q '^NEXT_PUBLIC_DEBUG_MODE=true' .env.production; then
+        echo "NEXT_PUBLIC_DEBUG_MODE is true; refusing to build a deployable image." && exit 1
+      fi
+    - npm run build
+    - mkdir -p /builds/$CI_PROJECT_PATH/app/.next
+    - mv .next/* /builds/$CI_PROJECT_PATH/app/.next
+    - mv public /builds/$CI_PROJECT_PATH/app
+    - mv next.config.ts /builds/$CI_PROJECT_PATH/app
+    - mv postcss.config.mjs /builds/$CI_PROJECT_PATH/app
+    - mv tsconfig.json /builds/$CI_PROJECT_PATH/app
+    - mv package.json /builds/$CI_PROJECT_PATH/app
+    - mv node_modules /builds/$CI_PROJECT_PATH/app
+    - ls -la /builds/$CI_PROJECT_PATH/app
+
+dockerize:
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+  image: docker:24.0.6
+  services:
+    - name: docker:24.0.6-dind
+      command: [ "dockerd", "-H", "tcp://0.0.0.0:2375", "--tls=false", "--experimental" ]
+  stage: dockerize
+  script:
+    - docker run --rm --privileged tonistiigi/binfmt --install all
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - export DOCKER_CLI_EXPERIMENTAL=enabled
+    - docker buildx create --use
+    - docker buildx build --platform linux/arm64 -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-$CI_COMMIT_BRANCH --push .
+
+deploy:
+  image: shikho/alpine
+  stage: deploy
+  script:
+    - |
+      if [[ "$CI_COMMIT_BRANCH" == "production" ]]
+      then
+        helm -n production upgrade --install --values=helm/values-production.yaml --set image.repository=$CI_REGISTRY_IMAGE --set image.tag=$CI_COMMIT_SHA-$CI_COMMIT_BRANCH mission-barshik ./helm
+      elif [[ "$CI_COMMIT_BRANCH" == "stage" ]]
+      then
+        helm -n stage upgrade --install --values=helm/values-stage.yaml --set image.repository=$CI_REGISTRY_IMAGE --set image.tag=$CI_COMMIT_SHA-$CI_COMMIT_BRANCH mission-barshik ./helm
+      elif [[ "$CI_COMMIT_BRANCH" == "develop" ]]
+      then
+        helm -n develop upgrade --install --values=helm/values-develop.yaml --set image.repository=$CI_REGISTRY_IMAGE --set image.tag=$CI_COMMIT_SHA-$CI_COMMIT_BRANCH mission-barshik ./helm
+      fi
+  after_script:
+    - if [ -d "${KUBEFOLDER}" ]; then rm -Rf $KUBEFOLDER; fi

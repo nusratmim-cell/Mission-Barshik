@@ -1,0 +1,40 @@
+namespace: "develop"
+
+labels:
+    app: mission_barshik
+    tier: frontend
+    enabled: "true"
+
+replicaCount: 1
+minReplicas: 1
+maxReplicas: 2
+
+image:
+    # Overridden by CI with --set image.repository=$CI_REGISTRY_IMAGE so this
+    # always matches whatever GitLab project the pipeline runs in.
+    repository: "registry.gitlab.com/shikho/frontend/mission_barshik"
+    pullPolicy: Always
+    tag: "develop"
+    resources:
+        requests:
+            memory: ".5Gi"
+            cpu: ".1"
+
+service:
+    type: NodePort
+    port: 8779
+    targetPort: 8779
+
+hpa:
+    -   type: Resource
+        resource:
+            name: cpu
+            target:
+                type: Utilization
+                averageUtilization: 70
+    -   type: Resource
+        resource:
+            name: memory
+            target:
+                type: Utilization
+                averageUtilization: 70
